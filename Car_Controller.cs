@@ -32,6 +32,13 @@ public class Car_Controller : MonoBehaviour
     public float Boost_Motor_Torque = 300f;
     public float Motor_Torque_Normal = 100f;
 
+    [Header("Audio Settings")]
+    public AudioSource Engine_Sound;
+    public float Max_Engine_Audio_Pitch;
+    public float Min_Engine_Audio_Pitch;
+    public float Min_Volume;
+    public float Max_Volume;
+
     [Header("Other Settings")]
     public Transform Center_of_Mass;
     public  float frictionMultiplier = 3f;
@@ -41,6 +48,12 @@ public class Car_Controller : MonoBehaviour
     private float Brakes = 0f;
     private WheelFrictionCurve  FLforwardFriction, FLsidewaysFriction;
     private WheelFrictionCurve  FRforwardFriction, FRsidewaysFriction;
+
+    //Private Audio Variables
+    private float Forward_volume;
+    private float Reverse_volume;
+    private float Reverse_pitch;
+    private float Forward_pitch;
 
     //Hidden Variables
     [HideInInspector]public float currSpeed;
@@ -84,7 +97,7 @@ public class Car_Controller : MonoBehaviour
             BR.GetGroundHit(out wheelHit4);
 
 			if(wheelHit1.sidewaysSlip < 0 )	
-				tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit1.sidewaysSlip *handBrakeFrictionMultiplier) ;
+				tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit1.sidewaysSlip *handBrakeFrictionMultiplier);
 				if(tempo < 0.5) tempo = 0.5f;
 			if(wheelHit1.sidewaysSlip > 0 )	
 				tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit1.sidewaysSlip *handBrakeFrictionMultiplier);
@@ -185,5 +198,120 @@ public class Car_Controller : MonoBehaviour
         FR.brakeTorque = Brakes;
         BL.brakeTorque = Brakes;
         BR.brakeTorque = Brakes;
+
+        //Play Car Audio
+        if(Input.GetKey(KeyCode.W)){
+            //Play Engine Sound
+            Engine_Sound.Play();
+
+            //Adjust Engine Sound Volume To Car Motor Torque
+            Forward_volume = -1f * (Motor_Torque/BR.motorTorque);
+
+            //Adjust Engine Speed
+            Forward_pitch = -1f * (BR.motorTorque/Motor_Torque);
+
+            if(Forward_volume > Max_Volume){
+                Forward_volume = Max_Volume;
+
+                if(Forward_pitch > Max_Engine_Audio_Pitch){
+                    Forward_pitch = Max_Engine_Audio_Pitch;
+
+                    Engine_Sound.volume = Forward_volume;
+                    Engine_Sound.pitch = Forward_pitch;
+                }
+
+                if(Forward_pitch < Min_Engine_Audio_Pitch){
+                    Forward_pitch = Min_Engine_Audio_Pitch;
+
+                    Engine_Sound.volume = Forward_volume;
+                    Engine_Sound.pitch = Forward_pitch;
+                }
+
+                else{
+                    Engine_Sound.volume = Forward_volume;
+                    Engine_Sound.pitch = Forward_pitch;
+                }
+            }
+
+            if(Forward_volume < Min_Volume){
+                Forward_volume = Min_Volume;
+
+                if(Forward_pitch > Max_Engine_Audio_Pitch){
+                    Forward_pitch = Max_Engine_Audio_Pitch;
+
+                    Engine_Sound.volume = Forward_volume;
+                    Engine_Sound.pitch = Forward_pitch;
+                }
+
+                if(Forward_pitch < Min_Engine_Audio_Pitch){
+                    Forward_pitch = Min_Engine_Audio_Pitch;
+
+                    Engine_Sound.volume = Forward_volume;
+                    Engine_Sound.pitch = Forward_pitch;
+                }
+
+                else{
+                    Engine_Sound.volume = Forward_volume;
+                    Engine_Sound.pitch = Forward_pitch;
+                }
+            }
+        }
+
+        if(Input.GetKey(KeyCode.S)){
+            //Play Engine Sound
+            Engine_Sound.Play();
+
+            //Adjust Engine Sound Volume To Car Motor Torque
+            Reverse_volume = Motor_Torque/BR.motorTorque;
+
+            //Adjust Audio To Engine Speed
+            Reverse_pitch = -1f * (BR.motorTorque/Motor_Torque);
+
+            if(Forward_volume > Max_Volume){
+                Forward_volume = Max_Volume;
+
+                if(Forward_pitch > Max_Engine_Audio_Pitch){
+                    Forward_pitch = Max_Engine_Audio_Pitch;
+
+                    Engine_Sound.volume = Forward_volume;
+                    Engine_Sound.pitch = Forward_pitch;
+                }
+
+                if(Forward_pitch < Min_Engine_Audio_Pitch){
+                    Forward_pitch = Min_Engine_Audio_Pitch;
+
+                    Engine_Sound.volume = Forward_volume;
+                    Engine_Sound.pitch = Forward_pitch;
+                }
+
+                else{
+                    Engine_Sound.volume = Forward_volume;
+                    Engine_Sound.pitch = Forward_pitch;
+                }
+            }
+
+            if(Forward_volume < Min_Volume){
+                Forward_volume = Min_Volume;
+
+                if(Forward_pitch > Max_Engine_Audio_Pitch){
+                    Forward_pitch = Max_Engine_Audio_Pitch;
+
+                    Engine_Sound.volume = Forward_volume;
+                    Engine_Sound.pitch = Forward_pitch;
+                }
+
+                if(Forward_pitch < Min_Engine_Audio_Pitch){
+                    Forward_pitch = Min_Engine_Audio_Pitch;
+
+                    Engine_Sound.volume = Forward_volume;
+                    Engine_Sound.pitch = Forward_pitch;
+                }
+
+                else{
+                    Engine_Sound.volume = Forward_volume;
+                    Engine_Sound.pitch = Forward_pitch;
+                }
+            }
+        }
     }
 }
