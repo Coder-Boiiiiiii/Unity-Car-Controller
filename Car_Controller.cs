@@ -19,6 +19,12 @@ public class Car_Controller : MonoBehaviour
     public Transform Bl;
     public Transform Br;
 
+    [Header("Wheel Transforms Rotations")]
+    public Vector3 FL_Rotation;
+    public Vector3 FR_Rotation;
+    public Vector3 BL_Rotation;
+    public Vector3 BR_Rotation;
+
     [Header("Car Settings")]
     public float Motor_Torque = 100f;
     public float Max_Steer_Angle = 20f;
@@ -44,11 +50,16 @@ public class Car_Controller : MonoBehaviour
     public Transform Center_of_Mass;
     public  float frictionMultiplier = 3f;
 
+    [Header("Script References")]
+    public Wheel_Effects Wheel_Effects;
+
     //private Variables
     private Rigidbody rb;
     private float Brakes = 0f;
     private WheelFrictionCurve  FLforwardFriction, FLsidewaysFriction;
     private WheelFrictionCurve  FRforwardFriction, FRsidewaysFriction;
+    private WheelFrictionCurve  BLforwardFriction, BLsidewaysFriction;
+    private WheelFrictionCurve  BRforwardFriction, BRsidewaysFriction;
 
     //Private Audio Variables
     private float Forward_volume;
@@ -160,19 +171,19 @@ public class Car_Controller : MonoBehaviour
         
         FL.GetWorldPose(out pos, out rot);
         Fl.position = pos;
-        Fl.rotation = rot * Quaternion.Euler(0, -90, 90);
+        Fl.rotation = rot * Quaternion.Euler(FL_Rotation);
 
         FR.GetWorldPose(out pos, out rot);
         Fr.position = pos;
-        Fr.rotation = rot * Quaternion.Euler(0, 90, -90);
+        Fr.rotation = rot * Quaternion.Euler(FR_Rotation);
 
         BL.GetWorldPose(out pos, out rot);
         Bl.position = pos;
-        Bl.rotation = rot * Quaternion.Euler(0, -90, 90);
+        Bl.rotation = rot * Quaternion.Euler(BL_Rotation);
 
         BR.GetWorldPose(out pos, out rot);
         Br.position = pos;
-        Br.rotation = rot * Quaternion.Euler(0, 90, -90);
+        Br.rotation = rot * Quaternion.Euler(BR_Rotation);
 
         //Make Car Brake
         if(Input.GetKey(KeyCode.Space) == true){
@@ -190,6 +201,18 @@ public class Car_Controller : MonoBehaviour
 
 			FRforwardFriction.extremumValue = FRforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
 			FRsidewaysFriction.extremumValue = FRsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+
+            BLforwardFriction = BL.forwardFriction;
+			BLsidewaysFriction = BL.sidewaysFriction;
+
+			BLforwardFriction.extremumValue = BLforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+			BLsidewaysFriction.extremumValue = BLsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+
+            BRforwardFriction = BR.forwardFriction;
+			BRsidewaysFriction = BR.sidewaysFriction;
+
+			BRforwardFriction.extremumValue = BRforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+			BRsidewaysFriction.extremumValue = BRsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
         }
 
         else{
