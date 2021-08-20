@@ -36,7 +36,7 @@ public class Wheel_Effects : MonoBehaviour
             T.emitting = true;
         }
 
-        if(!Enable_Particle_System){
+        if(Enable_Particle_System){
             foreach (ParticleSystem P in Skid_Particles)
             {
                 P.Play();
