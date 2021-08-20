@@ -104,11 +104,15 @@ public class Car_Controller : MonoBehaviour
         }
 
         if(Enable_Reverselights){
-            ReverseLights.enabled = false;
+            foreach(Light R in ReverseLights){
+                R.enabled = false;
+            }
         }
 
         if(Enable_Brakelights){
-            BrakeLights.enabled = false;
+            foreach(Light B in BrakeLights){
+                B.enabled = false;
+            }
         }
     }
 
@@ -200,13 +204,17 @@ public class Car_Controller : MonoBehaviour
         //Enable reverse lights when car is reversing
         if(Input.GetKey(KeyCode.S)){
             if(Enable_Reverselights){
-                ReverseLights.enabled = true;
+                foreach(Light RL in ReverseLights){
+                    RL.enabled = true;
+                }
             }
         }
 
         if(!Input.GetKey(KeyCode.S)){
             if(Enable_Reverselights){
-                ReverseLights.enabled = false
+                foreach(Light Rl in ReverseLights){
+                    Rl.enabled = false;
+                }
             }
         }
     }
