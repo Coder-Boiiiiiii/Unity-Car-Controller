@@ -38,7 +38,7 @@ public class Car_Controller : MonoBehaviour
     public float Boost_Motor_Torque = 300f;
     public float Motor_Torque_Normal = 100f;
 
-    [Header("Audio Settings")]
+    [Header("Audio Settings (Beta)")]
     public bool Enable_Audio;
     public AudioSource Engine_Sound;
     public float Max_Engine_Audio_Pitch;
@@ -46,12 +46,18 @@ public class Car_Controller : MonoBehaviour
     public float Min_Volume;
     public float Max_Volume;
 
+    [Header("Drift Settings")]
+    public bool Set_Drift_Settings_Automatically = true;
+    public float Forward_Extremium_Value_When_Drifting;
+    public float Sideways_Extremium_Value_When_Drifting;
+
+    [Header("Particle System(s)")]
+    public bool Use_Particle_Systems;
+    public ParticleSystem[] Car_Smoke_From_Silencer;//Sorry, couldn't think of a better name :P
+
     [Header("Other Settings")]
     public Transform Center_of_Mass;
     public  float frictionMultiplier = 3f;
-
-    [Header("Script References")]
-    public Wheel_Effects Wheel_Effects;
 
     //private Variables
     private Rigidbody rb;
@@ -75,6 +81,12 @@ public class Car_Controller : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.centerOfMass = Center_of_Mass.localPosition;
 
+        //Play Car Particle System
+        if(Use_Particle_Systems){
+            foreach(ParticleSystem P in Car_Smoke_From_Silencer){
+                P.Play();
+            }
+        }
     }
 
     void FixedUpdate(){
@@ -190,29 +202,59 @@ public class Car_Controller : MonoBehaviour
             Brakes = BrakeForce;
 
             //Drifting and changing wheel collider values
-            FLforwardFriction = FL.forwardFriction;
-			FLsidewaysFriction = FL.sidewaysFriction;
+            if(Set_Drift_Settings_Automatically){
+                FLforwardFriction = FL.forwardFriction;
+                FLsidewaysFriction = FL.sidewaysFriction;
 
-			FLforwardFriction.extremumValue = FLforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
-			FLsidewaysFriction.extremumValue = FLsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                FLforwardFriction.extremumValue = FLforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                FLsidewaysFriction.extremumValue = FLsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
 
-            FRforwardFriction = FR.forwardFriction;
-			FRsidewaysFriction = FR.sidewaysFriction;
+                FRforwardFriction = FR.forwardFriction;
+                FRsidewaysFriction = FR.sidewaysFriction;
 
-			FRforwardFriction.extremumValue = FRforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
-			FRsidewaysFriction.extremumValue = FRsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                FRforwardFriction.extremumValue = FRforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                FRsidewaysFriction.extremumValue = FRsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
 
-            BLforwardFriction = BL.forwardFriction;
-			BLsidewaysFriction = BL.sidewaysFriction;
+                BLforwardFriction = BL.forwardFriction;
+                BLsidewaysFriction = BL.sidewaysFriction;
 
-			BLforwardFriction.extremumValue = BLforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
-			BLsidewaysFriction.extremumValue = BLsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                BLforwardFriction.extremumValue = BLforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                BLsidewaysFriction.extremumValue = BLsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
 
-            BRforwardFriction = BR.forwardFriction;
-			BRsidewaysFriction = BR.sidewaysFriction;
+                BRforwardFriction = BR.forwardFriction;
+                BRsidewaysFriction = BR.sidewaysFriction;
 
-			BRforwardFriction.extremumValue = BRforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
-			BRsidewaysFriction.extremumValue = BRsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                BRforwardFriction.extremumValue = BRforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                BRsidewaysFriction.extremumValue = BRsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+            }
+
+            if(!Set_Drift_Settings_Automatically){
+                //Variables
+                FLforwardFriction = FL.forwardFriction;
+                FLsidewaysFriction = FL.sidewaysFriction;
+
+                FRforwardFriction = FR.forwardFriction;
+                FRsidewaysFriction = FR.sidewaysFriction;
+
+                BLforwardFriction = BL.forwardFriction;
+                BLsidewaysFriction = BL.sidewaysFriction;
+
+                BRforwardFriction = BR.forwardFriction;
+                BRsidewaysFriction = BR.sidewaysFriction;
+
+                //Setting The Extremium values to the ones that the user defined
+                FLforwardFriction.extremumValue = Forward_Extremium_Value_When_Drifting;
+                FLsidewaysFriction.extremumValue = Sideways_Extremium_Value_When_Drifting;
+
+                FRforwardFriction.extremumValue = Forward_Extremium_Value_When_Drifting;
+                FRsidewaysFriction.extremumValue = Sideways_Extremium_Value_When_Drifting;
+
+                BLforwardFriction.extremumValue = Forward_Extremium_Value_When_Drifting;
+                BLsidewaysFriction.extremumValue = Sideways_Extremium_Value_When_Drifting;
+
+                BRforwardFriction.extremumValue = Forward_Extremium_Value_When_Drifting;
+                BRsidewaysFriction.extremumValue = Sideways_Extremium_Value_When_Drifting;
+            }
         }
 
         else{
