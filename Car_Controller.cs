@@ -51,7 +51,16 @@ public class Car_Controller : MonoBehaviour
     public float Forward_Extremium_Value_When_Drifting;
     public float Sideways_Extremium_Value_When_Drifting;
 
-    [Header("Particle System(s)")]
+    [Header("Light Setting(s)")]
+    public bool Enable_Headlights;
+    public bool Enable_Brakelights;
+    public bool Enable_Reverselights;
+
+    public Light[] HeadLights;
+    public Light[] BrakeLights;
+    public Light[] ReverseLights;
+
+    [Header("Particle System(s) Settings")]
     public bool Use_Particle_Systems;
     public ParticleSystem[] Car_Smoke_From_Silencer;//Sorry, couldn't think of a better name :P
 
@@ -86,6 +95,20 @@ public class Car_Controller : MonoBehaviour
             foreach(ParticleSystem P in Car_Smoke_From_Silencer){
                 P.Play();
             }
+        }
+
+        if(Enable_Headlights){
+            foreach(Light H in HeadLights){
+                H.enabled = true;
+            }
+        }
+
+        if(Enable_Reverselights){
+            ReverseLights.enabled = false;
+        }
+
+        if(Enable_Brakelights){
+            BrakeLights.enabled = false;
         }
     }
 
@@ -169,10 +192,23 @@ public class Car_Controller : MonoBehaviour
 				handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
 				}
 
-			else
-
+			else{
 				handBrakeFriction = tempo;
+            }
 		}
+
+        //Enable reverse lights when car is reversing
+        if(Input.GetKey(KeyCode.S)){
+            if(Enable_Reverselights){
+                ReverseLights.enabled = true;
+            }
+        }
+
+        if(!Input.GetKey(KeyCode.S)){
+            if(Enable_Reverselights){
+                ReverseLights.enabled = false
+            }
+        }
     }
 
     public void Update(){
@@ -200,6 +236,13 @@ public class Car_Controller : MonoBehaviour
         //Make Car Brake
         if(Input.GetKey(KeyCode.Space) == true){
             Brakes = BrakeForce;
+
+            //Turn on brake lights
+            if(Enable_Brakelights){
+                foreach(Light L in BrakeLights){
+                    L.enabled = true;
+                }
+            }
 
             //Drifting and changing wheel collider values
             if(Set_Drift_Settings_Automatically){
@@ -265,6 +308,16 @@ public class Car_Controller : MonoBehaviour
         FR.brakeTorque = Brakes;
         BL.brakeTorque = Brakes;
         BR.brakeTorque = Brakes;
+
+        if(Input.GetKey(KeyCode.Space) == false){
+            //Turn off brake lights
+            if(!Enable_Brakelights){
+                foreach(Light L in BrakeLights){
+                    L.enabled = false;
+                }
+            }
+        }
+
 
         if(Enable_Audio == true){
                 //Play Car Audio
