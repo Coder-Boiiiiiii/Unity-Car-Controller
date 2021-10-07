@@ -116,7 +116,7 @@ public class Car_Controller : MonoBehaviour
         }
     }
 
-    void FixedUpdate(){
+    public void FixedUpdate(){
         //Making The Car Move Forward or Backward
         BL.motorTorque = Input.GetAxis("Vertical") * Motor_Torque;
         BR.motorTorque = Input.GetAxis("Vertical") * Motor_Torque;
@@ -137,69 +137,67 @@ public class Car_Controller : MonoBehaviour
         }
 
         //Make Car Drift
-        for(int i = 2;i<4 ;i++){
-            WheelHit wheelHit1;
-            WheelHit wheelHit2;
-            WheelHit wheelHit3;
-            WheelHit wheelHit4;
+        WheelHit wheelHit1;
+        WheelHit wheelHit2;
+        WheelHit wheelHit3;
+        WheelHit wheelHit4;
 
-            FL.GetGroundHit(out wheelHit1);
-            FR.GetGroundHit(out wheelHit2);
-            BL.GetGroundHit(out wheelHit3);
-            BR.GetGroundHit(out wheelHit4);
+        FL.GetGroundHit(out wheelHit1);
+        FR.GetGroundHit(out wheelHit2);
+        BL.GetGroundHit(out wheelHit3);
+        BR.GetGroundHit(out wheelHit4);
 
-			if(wheelHit1.sidewaysSlip < 0 )	
-				tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit1.sidewaysSlip *handBrakeFrictionMultiplier);
-				if(tempo < 0.5) tempo = 0.5f;
-			if(wheelHit1.sidewaysSlip > 0 )	
-				tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit1.sidewaysSlip *handBrakeFrictionMultiplier);
-				if(tempo < 0.5) tempo = 0.5f;
-            if(wheelHit1.sidewaysSlip > .99f || wheelHit1.sidewaysSlip < -.99f){
-				//handBrakeFriction = tempo * 3;
-				float velocity = 0;
-				handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
-				}
-
-            if(wheelHit2.sidewaysSlip < 0 )	
-				tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit2.sidewaysSlip *handBrakeFrictionMultiplier) ;
-				if(tempo < 0.5) tempo = 0.5f;
-			if(wheelHit2.sidewaysSlip > 0 )	
-				tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit2.sidewaysSlip *handBrakeFrictionMultiplier);
-				if(tempo < 0.5) tempo = 0.5f;
-            if(wheelHit2.sidewaysSlip > .99f || wheelHit2.sidewaysSlip < -.99f){
-				//handBrakeFriction = tempo * 3;
-				float velocity = 0;
-				handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
-				}
-
-            if(wheelHit3.sidewaysSlip < 0 )	
-				tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit3.sidewaysSlip *handBrakeFrictionMultiplier) ;
-				if(tempo < 0.5) tempo = 0.5f;
-			if(wheelHit3.sidewaysSlip > 0 )	
-				tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit3.sidewaysSlip *handBrakeFrictionMultiplier);
-				if(tempo < 0.5) tempo = 0.5f;
-            if(wheelHit3.sidewaysSlip > .99f || wheelHit3.sidewaysSlip < -.99f){
-				//handBrakeFriction = tempo * 3;
-				float velocity = 0;
-				handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
-				}
-
-            if(wheelHit4.sidewaysSlip < 0 )	
-				tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit4.sidewaysSlip *handBrakeFrictionMultiplier) ;
-				if(tempo < 0.5) tempo = 0.5f;
-			if(wheelHit4.sidewaysSlip > 0 )	
-				tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit4.sidewaysSlip *handBrakeFrictionMultiplier);
-				if(tempo < 0.5) tempo = 0.5f;
-            if(wheelHit4.sidewaysSlip > .99f || wheelHit4.sidewaysSlip < -.99f){
-				//handBrakeFriction = tempo * 3;
-				float velocity = 0;
-				handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
-				}
-
-			else{
-				handBrakeFriction = tempo;
+        if(wheelHit1.sidewaysSlip < 0 )	
+            tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit1.sidewaysSlip *handBrakeFrictionMultiplier);
+            if(tempo < 0.5) tempo = 0.5f;
+        if(wheelHit1.sidewaysSlip > 0 )	
+            tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit1.sidewaysSlip *handBrakeFrictionMultiplier);
+            if(tempo < 0.5) tempo = 0.5f;
+        if(wheelHit1.sidewaysSlip > .99f || wheelHit1.sidewaysSlip < -.99f){
+            //handBrakeFriction = tempo * 3;
+            float velocity = 0;
+            handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
             }
-		}
+
+        if(wheelHit2.sidewaysSlip < 0 )	
+            tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit2.sidewaysSlip *handBrakeFrictionMultiplier) ;
+            if(tempo < 0.5) tempo = 0.5f;
+        if(wheelHit2.sidewaysSlip > 0 )	
+            tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit2.sidewaysSlip *handBrakeFrictionMultiplier);
+            if(tempo < 0.5) tempo = 0.5f;
+        if(wheelHit2.sidewaysSlip > .99f || wheelHit2.sidewaysSlip < -.99f){
+            //handBrakeFriction = tempo * 3;
+            float velocity = 0;
+            handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
+            }
+
+        if(wheelHit3.sidewaysSlip < 0 )	
+            tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit3.sidewaysSlip *handBrakeFrictionMultiplier) ;
+            if(tempo < 0.5) tempo = 0.5f;
+        if(wheelHit3.sidewaysSlip > 0 )	
+            tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit3.sidewaysSlip *handBrakeFrictionMultiplier);
+            if(tempo < 0.5) tempo = 0.5f;
+        if(wheelHit3.sidewaysSlip > .99f || wheelHit3.sidewaysSlip < -.99f){
+            //handBrakeFriction = tempo * 3;
+            float velocity = 0;
+            handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
+            }
+
+        if(wheelHit4.sidewaysSlip < 0 )	
+            tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit4.sidewaysSlip *handBrakeFrictionMultiplier) ;
+            if(tempo < 0.5) tempo = 0.5f;
+        if(wheelHit4.sidewaysSlip > 0 )	
+            tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit4.sidewaysSlip *handBrakeFrictionMultiplier);
+            if(tempo < 0.5) tempo = 0.5f;
+        if(wheelHit4.sidewaysSlip > .99f || wheelHit4.sidewaysSlip < -.99f){
+            //handBrakeFriction = tempo * 3;
+            float velocity = 0;
+            handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
+            }
+
+        else{
+            handBrakeFriction = tempo;
+        }
 
         //Enable reverse lights when car is reversing
         if(Input.GetKey(KeyCode.S)){
@@ -317,9 +315,9 @@ public class Car_Controller : MonoBehaviour
         BL.brakeTorque = Brakes;
         BR.brakeTorque = Brakes;
 
-        if(Input.GetKey(KeyCode.Space) == false){
+        if(!Input.GetKey(KeyCode.Space)){
             //Turn off brake lights
-            if(!Enable_Brakelights){
+            if(Enable_Brakelights){
                 foreach(Light L in BrakeLights){
                     L.enabled = false;
                 }
