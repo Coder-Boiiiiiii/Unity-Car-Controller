@@ -33,13 +33,6 @@ public class Car_Controller : MonoBehaviour
 
     [Space(3)]
 
-    //These are the speeds for each gear
-    //The Brake and Reverse gears appear automatically so don't worry about those
-    //The Speeds MUST be in kph
-    public List<int> Gears_Speed;
-
-    [Space(3)]
-
     public float handBrakeFrictionMultiplier = 2;
     private float handBrakeFriction  = 0.05f;
     public float tempo;
@@ -87,21 +80,6 @@ public class Car_Controller : MonoBehaviour
     public bool Use_Particle_Systems;
     public ParticleSystem[] Car_Smoke_From_Silencer;//Sorry, couldn't think of a better name :P
 
-    [Header("UI Settings")]
-    public bool Use_TMP;
-    public bool Use_Default_UI;
-
-    [Space(3)]
-
-    public bool Show_Speed_In_KPH;
-    public Text Speed_Text_UI;
-    public TextMeshProUGUI Speed_Text_TMPPro;
-
-    [Space(3)]
-
-    public Text Gear_Text;
-    public TextMeshProUGUI Gear_TMPro;
-
     [Header("Other Settings")]
     public Transform Center_of_Mass;
     public  float frictionMultiplier = 3f;
@@ -117,11 +95,6 @@ public class Car_Controller : MonoBehaviour
 
     public float Car_Speed_KPH;
     public float Car_Speed_MPH;
-
-    [Space(4)]
-
-    public string Current_Gear;
-    public int Current_Gear_num;
 
     //private Variables
     private Rigidbody rb;
@@ -155,10 +128,6 @@ public class Car_Controller : MonoBehaviour
                 P.Play();
             }
         }
-
-        //Set the current gear to 0
-        Current_Gear = "0";
-        Current_Gear_num = 0;
         
         //Here we just set the lights to turn on and off at play.
 
@@ -203,30 +172,6 @@ public class Car_Controller : MonoBehaviour
     }
 
     public void FixedUpdate(){
-        //Changing Gears
-        if(Gears_Speed[Current_Gear_num] < Car_Speed_KPH && Current_Gear_num != Gears_Speed.Count){
-            Current_Gear_num++;
-            Current_Gear = (Current_Gear_num + 1).ToString();
-        }
-
-        if(Gears_Speed[Current_Gear_num] > Car_Speed_KPH && Current_Gear_num != 0){
-            Current_Gear_num--;
-            Current_Gear = (Current_Gear_num + 1).ToString();
-        }
-
-        if(Car_Speed_In_KPH == 0){
-            Current_Gear = "0";
-        }
-
-        //Setting the gear text to the current gear
-        if(Use_TMP){
-            Gear_TMPro.SetText(Current_Gear);
-        }
-
-        if(Use_Default_UI){
-            Gear_Text.text = Current_Gear;
-        }
-
         //Making The Car Move Forward or Backward
         BL.motorTorque = Input.GetAxis("Vertical") * Motor_Torque;
         BR.motorTorque = Input.GetAxis("Vertical") * Motor_Torque;
@@ -247,27 +192,6 @@ public class Car_Controller : MonoBehaviour
 
         Car_Speed_In_KPH = (int) Car_Speed_KPH;
         Car_Speed_In_MPH = (int) Car_Speed_MPH;
-
-        //Showing Car Speed
-        if(Use_Default_UI){
-            if(Show_Speed_In_KPH){
-                Speed_Text_UI.text = Car_Speed_In_KPH.ToString();
-            }
-
-            if(!Show_Speed_In_KPH){
-                Speed_Text_UI.text = Car_Speed_In_MPH.ToString();
-            }
-        }
-
-        if(Use_TMP){
-            if(Show_Speed_In_KPH){
-                Speed_Text_TMPPro.SetText(Car_Speed_In_KPH.ToString());
-            }
-
-            if(!Show_Speed_In_KPH){
-                Speed_Text_TMPPro.SetText(Car_Speed_In_MPH.ToString());
-            }
-        }
 
         //Make Car Boost
         if(Input.GetKey(KeyCode.LeftShift)){
@@ -360,9 +284,6 @@ public class Car_Controller : MonoBehaviour
         }
 
         if(Input.GetKey(KeyCode.S)){
-            //Change gear to "R"
-            Current_Gear = "R";
-            
             //Enable reverse lights when car is reversing
             if(Enable_Reverselights_Lights){
                 foreach(Light RL in ReverseLights){
@@ -417,9 +338,6 @@ public class Car_Controller : MonoBehaviour
         //Make Car Brake
         if(Input.GetKey(KeyCode.Space) == true){
             Brakes = BrakeForce;
-
-            //Set the Current Gear to B
-            Current_Gear = "B";
 
             //Turn on brake lights
             if(Enable_Brakelights_Lights){
