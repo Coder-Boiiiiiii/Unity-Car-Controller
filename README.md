@@ -14,3 +14,5 @@ I made it so people don't have to spend hours searching for a car controller tha
 4. Boost
 5. Lights (Brake Lights, Headlights and Reverse Lights)
 6. Audio System (Not Very Good, still bad and full of bugs)
+7. Gear System
+8. Speedometer
