@@ -25,6 +25,15 @@ public class Speedometer_Controller : MonoBehaviour
     public RectTransform Arrow;
     public TextMeshProUGUI Gear_Text;
 
+    [Header("Audio Settings")]
+
+    public bool Use_Audio_Settings;
+    public AudioSource Gear_Shift_Up;
+    public AudioSource Gear_Shift_Down;
+
+    [Header("Script Reference(s)")]
+    public Car_Controller car_controller_script;
+
     [Header("Debug")]
     public string Current_Gear;
     public int Current_Gear_num;
@@ -83,12 +92,16 @@ public class Speedometer_Controller : MonoBehaviour
             if(Gear_Speeds[Current_Gear_num] < speed && Current_Gear_num != Gear_Speeds.Count){
                 Current_Gear_num++;
                 Current_Gear = (Current_Gear_num + 1).ToString();
+                //Play gear shift up effect
+                Gear_Shift_Up.Play();
             }
 
             //When current speed is less than the speed of the current gear
             if(Gear_Speeds[Current_Gear_num] > speed && Current_Gear_num != 0){
                 Current_Gear_num--;
                 Current_Gear = Current_Gear_num.ToString();
+                //Play gear shift down audio
+                Gear_Shift_Down.Play();
             }
 
             //When the last gear speed is the same as the current speed
