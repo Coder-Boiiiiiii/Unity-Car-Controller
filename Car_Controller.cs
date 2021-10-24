@@ -30,8 +30,9 @@ public class Car_Controller : MonoBehaviour
     public float Motor_Torque = 100f;
     public float Max_Steer_Angle = 20f;
     public float  BrakeForce = 150f;
+    public float Maximum_Speed;
 
-    [Space(3)]
+    [Space(10)]
 
     public float handBrakeFrictionMultiplier = 2;
     private float handBrakeFriction  = 0.05f;
@@ -56,7 +57,7 @@ public class Car_Controller : MonoBehaviour
 
     [Header("Light Setting(s)")]
 
-    [Header("Lights (With Light Settings)")]
+    [Header("Lights (With Light Objects)")]
     public bool Enable_Headlights_Lights;
     public bool Enable_Brakelights_Lights;
     public bool Enable_Reverselights_Lights;
@@ -67,7 +68,7 @@ public class Car_Controller : MonoBehaviour
 
     [Space(4)]
 
-    [Header("Light (With MeshRenderer")]
+    [Header("Light (With MeshRenderers)")]
     public bool Enable_Headlights_MeshRenderers;
     public bool Enable_Brakelights_MeshRenderers;
     public bool Enable_Reverselights_MeshRenderers;
@@ -95,6 +96,9 @@ public class Car_Controller : MonoBehaviour
 
     public float Car_Speed_KPH;
     public float Car_Speed_MPH;
+      //Debug Values in Int Form
+    public int Car_Speed_In_KPH;
+    public int Car_Speed_In_MPH;
 
     //private Variables
     private Rigidbody rb;
@@ -103,10 +107,6 @@ public class Car_Controller : MonoBehaviour
     private WheelFrictionCurve  FRforwardFriction, FRsidewaysFriction;
     private WheelFrictionCurve  BLforwardFriction, BLsidewaysFriction;
     private WheelFrictionCurve  BRforwardFriction, BRsidewaysFriction;
-
-    //Debug Values in Int Form
-    int Car_Speed_In_KPH;
-    int Car_Speed_In_MPH;
 
     //Private Audio Variables
     private float Forward_volume;
@@ -172,11 +172,19 @@ public class Car_Controller : MonoBehaviour
     }
 
     public void FixedUpdate(){
-        //Making The Car Move Forward or Backward
-        BL.motorTorque = Input.GetAxis("Vertical") * Motor_Torque;
-        BR.motorTorque = Input.GetAxis("Vertical") * Motor_Torque;
+        //Applying Maximum Speed
+        if(Car_Speed_In_KPH < Maximum_Speed){
+            //Making The Car Move Forward or Backward
+            BL.motorTorque = Input.GetAxis("Vertical") * Motor_Torque;
+            BR.motorTorque = Input.GetAxis("Vertical") * Motor_Torque;
+        }
 
-        //Making The Car Turn
+        if(Car_Speed_In_KPH > Maximum_Speed){
+            BL.motorTorque = 0;
+            BR.motorTorque = 0;
+        }
+
+        //Making The Car Turn/Steer
         FL.steerAngle = Input.GetAxis("Horizontal") * Max_Steer_Angle;
         FR.steerAngle = Input.GetAxis("Horizontal") * Max_Steer_Angle;
 
