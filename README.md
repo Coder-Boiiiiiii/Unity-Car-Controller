@@ -7,6 +7,9 @@ It is basically a car controller in 2 (3 if you want to make it sophisticated) s
 ## Why I Made This
 I made it so people don't have to spend hours searching for a car controller that is customizable and easy to implement.
 
+## Dependencies
+There is only 1 dependency, that is if you use the speedometer script, which is Text Mesh Pro (TMP)
+
 ## Current Features
 1. Basic movement
 2. Drifting
@@ -16,3 +19,4 @@ I made it so people don't have to spend hours searching for a car controller tha
 6. Audio System (Not Very Good, still bad and full of bugs)
 7. Gear System
 8. Speedometer
+9. Radio
