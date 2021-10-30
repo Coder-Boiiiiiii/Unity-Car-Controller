@@ -4,27 +4,20 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
+using System.Linq;
 
 public class Car_Controller : MonoBehaviour
 {
     //Public Variables
     [Header("Wheel Colliders")]
-    public WheelCollider FL;
-    public WheelCollider FR;
-    public WheelCollider BL;
-    public WheelCollider BR;
+    public List<WheelCollider> Front_Wheels;
+    public List<WheelCollider> Back_Wheels;
 
     [Header("Wheel Transforms")]
-    public Transform Fl;
-    public Transform Fr;
-    public Transform Bl;
-    public Transform Br;
+    public List<Transform> Wheel_Transforms;
 
     [Header("Wheel Transforms Rotations")]
-    public Vector3 FL_Rotation;
-    public Vector3 FR_Rotation;
-    public Vector3 BL_Rotation;
-    public Vector3 BR_Rotation;
+    public List<Vector3> Wheels_Rotation;
 
     [Header("Car Settings")]
     public float Motor_Torque = 100f;
@@ -32,7 +25,7 @@ public class Car_Controller : MonoBehaviour
     public float  BrakeForce = 150f;
     public float Maximum_Speed;
 
-    [Space(10)]
+    [Space(15)]
 
     public float handBrakeFrictionMultiplier = 2;
     private float handBrakeFriction  = 0.05f;
@@ -42,13 +35,23 @@ public class Car_Controller : MonoBehaviour
     public float Boost_Motor_Torque = 300f;
     public float Motor_Torque_Normal = 100f;
 
-    [Header("Audio Settings (Beta)")]
+    [Header("Audio Settings")]
     public bool Enable_Audio;
+    public bool Enable_Engine_Audio;
     public AudioSource Engine_Sound;
-    public float Max_Engine_Audio_Pitch;
-    public float Min_Engine_Audio_Pitch;
-    public float Min_Volume;
-    public float Max_Volume;
+    public float Minimum_Pitch_Value;
+    public float Maximum_Pitch_Value;
+
+    [Space(15)]
+
+    public bool Enable_Horn;
+    public AudioSource Horn_Source;
+    public KeyCode Car_Horn_Key;
+
+    [Header("Crash System")]
+    public bool Enable_Crash_Noise;
+    public string[] Crash_Object_Tags;
+    public AudioSource Crash_Sound;
 
     [Header("Drift Settings")]
     public bool Set_Drift_Settings_Automatically = true;
@@ -57,18 +60,20 @@ public class Car_Controller : MonoBehaviour
 
     [Header("Light Setting(s)")]
 
-    [Header("Lights (With Light Objects)")]
+    [Header("Light Settings (With Light Objects)")]
     public bool Enable_Headlights_Lights;
     public bool Enable_Brakelights_Lights;
     public bool Enable_Reverselights_Lights;
+    public KeyCode Headlights_Key;
+    
 
     public Light[] HeadLights;
     public Light[] BrakeLights;
     public Light[] ReverseLights;
 
-    [Space(4)]
+    [Space(15)]
 
-    [Header("Light (With MeshRenderers)")]
+    [Header("Light Settings (With MeshRenderers)")]
     public bool Enable_Headlights_MeshRenderers;
     public bool Enable_Brakelights_MeshRenderers;
     public bool Enable_Reverselights_MeshRenderers;
@@ -81,6 +86,13 @@ public class Car_Controller : MonoBehaviour
     public bool Use_Particle_Systems;
     public ParticleSystem[] Car_Smoke_From_Silencer;//Sorry, couldn't think of a better name :P
 
+    [Header("Radio Settings")]
+    public bool Enable_Radio;
+    public KeyCode Next_Song_Key;
+    public KeyCode Prev_Song_Key;
+    public List<AudioClip> Tracks;
+    public AudioSource Player_Source;
+
     [Header("Other Settings")]
     public Transform Center_of_Mass;
     public  float frictionMultiplier = 3f;
@@ -92,53 +104,60 @@ public class Car_Controller : MonoBehaviour
     public float RPM_BL;
     public float RPM_BR;
 
-    [Space(8)]
+    [Space(15)]
 
     public float Car_Speed_KPH;
     public float Car_Speed_MPH;
-      //Debug Values in Int Form
+    
+    [Space(15)]
+
+    public bool HeadLights_On;
+
+    //Debug Values in Int Form
     public int Car_Speed_In_KPH;
     public int Car_Speed_In_MPH;
 
     //private Variables
     private Rigidbody rb;
     private float Brakes = 0f;
-    private WheelFrictionCurve  FLforwardFriction, FLsidewaysFriction;
-    private WheelFrictionCurve  FRforwardFriction, FRsidewaysFriction;
-    private WheelFrictionCurve  BLforwardFriction, BLsidewaysFriction;
-    private WheelFrictionCurve  BRforwardFriction, BRsidewaysFriction;
+    private WheelFrictionCurve  Wheel_forwardFriction, Wheel_sidewaysFriction;
 
     //Private Audio Variables
-    private float Forward_volume;
-    private float Reverse_volume;
-    private float Reverse_pitch;
-    private float Forward_pitch;
+    private float pitch;
+    private int Current_Track;
 
-    //Hidden Variables
-    [HideInInspector]public float currSpeed;
+    //Hidden Variables (not private, but hidden in inspector)
+    [HideInInspector] public float currSpeed;
 
     void Start(){
         //To Prevent The Car From Toppling When Turning Too Much
         rb = GetComponent<Rigidbody>();
         rb.centerOfMass = Center_of_Mass.localPosition;
 
-        //Play Car Particle System
+        //Play Car Smoke Particle System
         if(Use_Particle_Systems){
             foreach(ParticleSystem P in Car_Smoke_From_Silencer){
                 P.Play();
             }
         }
+
+        //Play the first song
+        if(Enable_Radio){
+            Player_Source.enabled = false;
+            Player_Source.clip = Tracks[Current_Track];
+            Player_Source.enabled = true;
+        }
         
         //Here we just set the lights to turn on and off at play.
 
-        //We turn the headlights on here
-        if(Enable_Headlights_Lights){
+        //We turn the headlights on/off here
+        if(Enable_Headlights_Lights && HeadLights_On){
             foreach(Light H in HeadLights){
                 H.enabled = true;
             }
         }
 
-        if(Enable_Headlights_MeshRenderers){
+        if(Enable_Headlights_MeshRenderers && HeadLights_On){
             foreach(MeshRenderer HM in HeadLights_MeshRenderers){
                 HM.enabled = true;
             }
@@ -169,30 +188,139 @@ public class Car_Controller : MonoBehaviour
                 BM.enabled = true;
             }
         }
+
+        //Turning some things off if their options are disabled
+        if(!Enable_Horn && Horn_Source != null){
+            Horn_Source.gameObject.SetActive(false);
+        }
+
+        if(!Enable_Engine_Audio && Engine_Sound != null){
+            Engine_Sound.gameObject.SetActive(false);
+        }
+
+        if(!Enable_Audio && (Engine_Sound != null || Horn_Source != null)){
+            Horn_Source.gameObject.SetActive(false);
+            Engine_Sound.gameObject.SetActive(false);
+        }
     }
 
     public void FixedUpdate(){
+        //Check the keys for headlights and turn them off/on
+        if(Input.GetKeyDown(Headlights_Key) && (Enable_Headlights_Lights || Enable_Brakelights_MeshRenderers)){
+            if(Input.GetKeyUp(Headlights_Key) && (Enable_Headlights_Lights || Enable_Brakelights_MeshRenderers)){
+                if(HeadLights_On){
+                    HeadLights_On = false;
+                }
+
+                if(!HeadLights_On){
+                    HeadLights_On = true;
+                }
+            }
+        }
+
+        //Check if the headlights were turned on or off
+        if(Enable_Headlights_Lights && HeadLights_On){
+            foreach(Light H in HeadLights){
+                H.enabled = true;
+            }
+        }
+
+        if(Enable_Headlights_MeshRenderers && HeadLights_On){
+            foreach(MeshRenderer HM in HeadLights_MeshRenderers){
+                HM.enabled = true;
+            }
+        }
+
+        if(Enable_Headlights_Lights && !HeadLights_On){
+            foreach(Light H in HeadLights){
+                H.enabled = false;
+            }
+        }
+
+        if(Enable_Headlights_MeshRenderers && !HeadLights_On){
+            foreach(MeshRenderer HM in HeadLights_MeshRenderers){
+                HM.enabled = false;
+            }
+        }
+
+        //The radio
+        if(Enable_Radio){
+            //Checking if the current song has finished playing
+            if(!Player_Source.isPlaying){
+
+                //Checking if the track was the last one
+                if(Tracks.Last() == Tracks[Current_Track]){
+                    Current_Track = 0;
+                    Player_Source.enabled = false;
+                    Player_Source.clip = Tracks[Current_Track];
+                    Player_Source.enabled = true;
+                }
+
+                else{
+                    Current_Track++;
+                    Player_Source.enabled = false;
+                    Player_Source.clip = Tracks[Current_Track];
+                    Player_Source.enabled = true;
+                }
+            }
+
+            //Checking if player went to the next song/track
+            if(Input.GetKeyDown(Next_Song_Key)){
+                if(Input.GetKeyUp(Next_Song_Key)){
+                    if(Tracks.Last() == Tracks[Current_Track]){
+                        Current_Track = 0;
+                        Player_Source.enabled = false;
+                        Player_Source.clip = Tracks[Current_Track];
+                        Player_Source.enabled = true;
+                    }
+
+                    else{
+                        Current_Track++;
+                        Player_Source.enabled = false;
+                        Player_Source.clip = Tracks[Current_Track];
+                        Player_Source.enabled = true;
+                    }
+                }
+            }
+
+            //Checking if the player went to the previous song/track
+            if(Input.GetKeyDown(Prev_Song_Key)){
+                if(Input.GetKeyUp(Prev_Song_Key)){
+                    if(Tracks.Last() == Tracks[Current_Track]){
+                        Current_Track = 0;
+                        Player_Source.enabled = false;
+                        Player_Source.clip = Tracks[Current_Track];
+                        Player_Source.enabled = true;
+                    }
+
+                    else{
+                        Current_Track++;
+                        Player_Source.enabled = false;
+                        Player_Source.clip = Tracks[Current_Track];
+                        Player_Source.enabled = true;
+                    }
+                }
+            }
+        }
         //Applying Maximum Speed
         if(Car_Speed_In_KPH < Maximum_Speed){
+
             //Making The Car Move Forward or Backward
-            BL.motorTorque = Input.GetAxis("Vertical") * Motor_Torque;
-            BR.motorTorque = Input.GetAxis("Vertical") * Motor_Torque;
+            foreach(WheelCollider Wheel in Back_Wheels){
+                Wheel.motorTorque = Input.GetAxis("Vertical") * Motor_Torque;
+            }
         }
 
         if(Car_Speed_In_KPH > Maximum_Speed){
-            BL.motorTorque = 0;
-            BR.motorTorque = 0;
+            foreach(WheelCollider Wheel in Back_Wheels){
+                Wheel.motorTorque = 0;
+            }
         }
 
         //Making The Car Turn/Steer
-        FL.steerAngle = Input.GetAxis("Horizontal") * Max_Steer_Angle;
-        FR.steerAngle = Input.GetAxis("Horizontal") * Max_Steer_Angle;
-
-        //Showing the RPM for the wheels
-        RPM_FL = FL.rpm;
-        RPM_BL = BL.rpm;
-        RPM_FR = FR.rpm;
-        RPM_BR = BR.rpm;
+        foreach(WheelCollider Wheel in Front_Wheels){
+            Wheel.steerAngle = Input.GetAxis("Horizontal") * Max_Steer_Angle;
+        }
 
         //Changing speed of the car
         Car_Speed_KPH = Car_Rigidbody.velocity.magnitude * 3.6f;
@@ -213,82 +341,54 @@ public class Car_Controller : MonoBehaviour
         }
 
         //Make Car Drift
-        WheelHit wheelHit1;
-        WheelHit wheelHit2;
-        WheelHit wheelHit3;
-        WheelHit wheelHit4;
+        WheelHit wheelHit;
 
-        FL.GetGroundHit(out wheelHit1);
-        FR.GetGroundHit(out wheelHit2);
-        BL.GetGroundHit(out wheelHit3);
-        BR.GetGroundHit(out wheelHit4);
+        foreach(WheelCollider Wheel in Back_Wheels){
+            Wheel.GetGroundHit(out wheelHit);
 
-        if(wheelHit1.sidewaysSlip < 0 )	
-            tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit1.sidewaysSlip *handBrakeFrictionMultiplier);
+            if(wheelHit.sidewaysSlip < 0 )	
+                tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit.sidewaysSlip *handBrakeFrictionMultiplier);
 
-            if(tempo < 0.5) tempo = 0.5f;
+                if(tempo < 0.5) tempo = 0.5f;
 
-        if(wheelHit1.sidewaysSlip > 0 )	
-            tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit1.sidewaysSlip *handBrakeFrictionMultiplier);
+            if(wheelHit.sidewaysSlip > 0 )	
+                tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit.sidewaysSlip *handBrakeFrictionMultiplier);
 
-            if(tempo < 0.5) tempo = 0.5f;
+                if(tempo < 0.5) tempo = 0.5f;
 
-        if(wheelHit1.sidewaysSlip > .99f || wheelHit1.sidewaysSlip < -.99f){
-            //handBrakeFriction = tempo * 3;
-            float velocity = 0;
-            handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
+            if(wheelHit.sidewaysSlip > .99f || wheelHit.sidewaysSlip < -.99f){
+                //handBrakeFriction = tempo * 3;
+                float velocity = 0;
+                handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
+                }
+
+            else{
+                handBrakeFriction = tempo;
             }
+        }
 
-        if(wheelHit2.sidewaysSlip < 0 )	
-            tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit2.sidewaysSlip *handBrakeFrictionMultiplier);
+        foreach(WheelCollider Wheel in Front_Wheels){
+            Wheel.GetGroundHit(out wheelHit);
 
-            if(tempo < 0.5) tempo = 0.5f;
-        
-        if(wheelHit2.sidewaysSlip > 0 )	
-            tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit2.sidewaysSlip *handBrakeFrictionMultiplier);
-        
-            if(tempo < 0.5) tempo = 0.5f;
-        
-        if(wheelHit2.sidewaysSlip > .99f || wheelHit2.sidewaysSlip < -.99f){
-            //handBrakeFriction = tempo * 3;
-            float velocity = 0;
-            handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
+            if(wheelHit.sidewaysSlip < 0 )	
+                tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit.sidewaysSlip *handBrakeFrictionMultiplier);
+
+                if(tempo < 0.5) tempo = 0.5f;
+
+            if(wheelHit.sidewaysSlip > 0 )	
+                tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit.sidewaysSlip *handBrakeFrictionMultiplier);
+
+                if(tempo < 0.5) tempo = 0.5f;
+
+            if(wheelHit.sidewaysSlip > .99f || wheelHit.sidewaysSlip < -.99f){
+                //handBrakeFriction = tempo * 3;
+                float velocity = 0;
+                handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
+                }
+
+            else{
+                handBrakeFriction = tempo;
             }
-
-        if(wheelHit3.sidewaysSlip < 0 )	
-            tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit3.sidewaysSlip *handBrakeFrictionMultiplier) ;
-        
-            if(tempo < 0.5) tempo = 0.5f;
-        
-        if(wheelHit3.sidewaysSlip > 0 )	
-            tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit3.sidewaysSlip *handBrakeFrictionMultiplier);
-        
-            if(tempo < 0.5) tempo = 0.5f;
-        
-        if(wheelHit3.sidewaysSlip > .99f || wheelHit3.sidewaysSlip < -.99f){
-            //handBrakeFriction = tempo * 3;
-            float velocity = 0;
-            handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
-            }
-
-        if(wheelHit4.sidewaysSlip < 0 )	
-            tempo = (1 + -Input.GetAxis("Horizontal")) * Mathf.Abs(wheelHit4.sidewaysSlip *handBrakeFrictionMultiplier) ;
-        
-            if(tempo < 0.5) tempo = 0.5f;
-        
-        if(wheelHit4.sidewaysSlip > 0 )	
-            tempo = (1 + Input.GetAxis("Horizontal") )* Mathf.Abs(wheelHit4.sidewaysSlip *handBrakeFrictionMultiplier);
-        
-            if(tempo < 0.5) tempo = 0.5f;
-        
-        if(wheelHit4.sidewaysSlip > .99f || wheelHit4.sidewaysSlip < -.99f){
-            //handBrakeFriction = tempo * 3;
-            float velocity = 0;
-            handBrakeFriction = Mathf.SmoothDamp(handBrakeFriction,tempo* 3,ref velocity ,0.1f * Time.deltaTime);
-            }
-
-        else{
-            handBrakeFriction = tempo;
         }
 
         if(Input.GetKey(KeyCode.S)){
@@ -323,25 +423,29 @@ public class Car_Controller : MonoBehaviour
 
     public void Update(){
 
-        //Rotating The Wheels So They Don't Slide
+        //Rotating The Wheels Meshes so they have the same position and rotation as the wheel colliders
         var pos = Vector3.zero;
         var rot = Quaternion.identity;
         
-        FL.GetWorldPose(out pos, out rot);
-        Fl.position = pos;
-        Fl.rotation = rot * Quaternion.Euler(FL_Rotation);
+        foreach(WheelCollider Wheel_Col in Back_Wheels){
+            foreach(Transform Wheel in Wheel_Transforms){
+                foreach(Vector3 Wheel_Rotation in Wheels_Rotation){
+                    Wheel_Col.GetWorldPose(out pos, out rot);
+                    Wheel.position = pos;
+                    Wheel.rotation = rot * Quaternion.Euler(Wheel_Rotation);
+                }
+            }
+        }
 
-        FR.GetWorldPose(out pos, out rot);
-        Fr.position = pos;
-        Fr.rotation = rot * Quaternion.Euler(FR_Rotation);
-
-        BL.GetWorldPose(out pos, out rot);
-        Bl.position = pos;
-        Bl.rotation = rot * Quaternion.Euler(BL_Rotation);
-
-        BR.GetWorldPose(out pos, out rot);
-        Br.position = pos;
-        Br.rotation = rot * Quaternion.Euler(BR_Rotation);
+        foreach(WheelCollider Wheel_Col in Front_Wheels){
+            foreach(Transform Wheel in Wheel_Transforms){
+                foreach(Vector3 Wheel_Rotation in Wheels_Rotation){
+                    Wheel_Col.GetWorldPose(out pos, out rot);
+                    Wheel.position = pos;
+                    Wheel.rotation = rot * Quaternion.Euler(Wheel_Rotation);
+                }
+            }
+        }
 
         //Make Car Brake
         if(Input.GetKey(KeyCode.Space) == true){
@@ -362,57 +466,43 @@ public class Car_Controller : MonoBehaviour
 
             //Drifting and changing wheel collider values
             if(Set_Drift_Settings_Automatically){
-                FLforwardFriction = FL.forwardFriction;
-                FLsidewaysFriction = FL.sidewaysFriction;
+                foreach(WheelCollider Wheel in Back_Wheels){
+                    Wheel_forwardFriction = Wheel.forwardFriction;
+                    Wheel_sidewaysFriction = Wheel.sidewaysFriction;
 
-                FLforwardFriction.extremumValue = FLforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
-                FLsidewaysFriction.extremumValue = FLsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                    Wheel_forwardFriction.extremumValue = Wheel_forwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                    Wheel_sidewaysFriction.extremumValue = Wheel_sidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                }
 
-                FRforwardFriction = FR.forwardFriction;
-                FRsidewaysFriction = FR.sidewaysFriction;
+                foreach(WheelCollider Wheel in Front_Wheels){
+                    Wheel_forwardFriction = Wheel.forwardFriction;
+                    Wheel_sidewaysFriction = Wheel.sidewaysFriction;
 
-                FRforwardFriction.extremumValue = FRforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
-                FRsidewaysFriction.extremumValue = FRsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
-
-                BLforwardFriction = BL.forwardFriction;
-                BLsidewaysFriction = BL.sidewaysFriction;
-
-                BLforwardFriction.extremumValue = BLforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
-                BLsidewaysFriction.extremumValue = BLsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
-
-                BRforwardFriction = BR.forwardFriction;
-                BRsidewaysFriction = BR.sidewaysFriction;
-
-                BRforwardFriction.extremumValue = BRforwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
-                BRsidewaysFriction.extremumValue = BRsidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                    Wheel_forwardFriction.extremumValue = Wheel_forwardFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                    Wheel_sidewaysFriction.extremumValue = Wheel_sidewaysFriction.asymptoteValue = ((currSpeed * frictionMultiplier) / 300) + 1;
+                }
             }
 
             if(!Set_Drift_Settings_Automatically){
-                //Variables
-                FLforwardFriction = FL.forwardFriction;
-                FLsidewaysFriction = FL.sidewaysFriction;
+                foreach(WheelCollider Wheel in Back_Wheels){
+                    //Variables getting assigned
+                    Wheel_forwardFriction = Wheel.forwardFriction;
+                    Wheel_sidewaysFriction = Wheel.sidewaysFriction;
 
-                FRforwardFriction = FR.forwardFriction;
-                FRsidewaysFriction = FR.sidewaysFriction;
+                    //Setting The Extremium values to the ones that the user defined
+                    Wheel_forwardFriction.extremumValue = Forward_Extremium_Value_When_Drifting;
+                    Wheel_sidewaysFriction.extremumValue = Sideways_Extremium_Value_When_Drifting;
+                }
 
-                BLforwardFriction = BL.forwardFriction;
-                BLsidewaysFriction = BL.sidewaysFriction;
+                foreach(WheelCollider Wheel in Front_Wheels){
+                    //Variables getting assigned
+                    Wheel_forwardFriction = Wheel.forwardFriction;
+                    Wheel_sidewaysFriction = Wheel.sidewaysFriction;
 
-                BRforwardFriction = BR.forwardFriction;
-                BRsidewaysFriction = BR.sidewaysFriction;
-
-                //Setting The Extremium values to the ones that the user defined
-                FLforwardFriction.extremumValue = Forward_Extremium_Value_When_Drifting;
-                FLsidewaysFriction.extremumValue = Sideways_Extremium_Value_When_Drifting;
-
-                FRforwardFriction.extremumValue = Forward_Extremium_Value_When_Drifting;
-                FRsidewaysFriction.extremumValue = Sideways_Extremium_Value_When_Drifting;
-
-                BLforwardFriction.extremumValue = Forward_Extremium_Value_When_Drifting;
-                BLsidewaysFriction.extremumValue = Sideways_Extremium_Value_When_Drifting;
-
-                BRforwardFriction.extremumValue = Forward_Extremium_Value_When_Drifting;
-                BRsidewaysFriction.extremumValue = Sideways_Extremium_Value_When_Drifting;
+                    //Setting The Extremium values to the ones that the user defined
+                    Wheel_forwardFriction.extremumValue = Forward_Extremium_Value_When_Drifting;
+                    Wheel_sidewaysFriction.extremumValue = Sideways_Extremium_Value_When_Drifting;
+                }
             }
         }
 
@@ -420,10 +510,14 @@ public class Car_Controller : MonoBehaviour
             Brakes = 0f;
         }
 
-        FL.brakeTorque = Brakes;
-        FR.brakeTorque = Brakes;
-        BL.brakeTorque = Brakes;
-        BR.brakeTorque = Brakes;
+        //Apply brake force
+        foreach(WheelCollider Wheel in Front_Wheels){
+            Wheel.brakeTorque = Brakes;
+        }
+
+        foreach(WheelCollider Wheel in Back_Wheels){
+            Wheel.brakeTorque = Brakes;
+        }
 
         if(!Input.GetKey(KeyCode.Space)){
             //Turn off brake lights
@@ -440,123 +534,55 @@ public class Car_Controller : MonoBehaviour
             }
         }
 
-
-        if(Enable_Audio == true){
-                //Play Car Audio
-            if(Input.GetKey(KeyCode.W)){
-                //Play Engine Sound
-                Engine_Sound.Play();
-
-                //Adjust Engine Sound Volume To Car Motor Torque
-                Forward_volume = -1f * (Motor_Torque/BR.motorTorque);
-
-                //Adjust Engine Speed
-                Forward_pitch = -1f * (BR.motorTorque/Motor_Torque);
-
-                if(Forward_volume > Max_Volume){
-                    Forward_volume = Max_Volume;
-
-                    if(Forward_pitch > Max_Engine_Audio_Pitch){
-                        Forward_pitch = Max_Engine_Audio_Pitch;
-
-                        Engine_Sound.volume = Forward_volume;
-                        Engine_Sound.pitch = Forward_pitch;
-                    }
-
-                    if(Forward_pitch < Min_Engine_Audio_Pitch){
-                        Forward_pitch = Min_Engine_Audio_Pitch;
-
-                        Engine_Sound.volume = Forward_volume;
-                        Engine_Sound.pitch = Forward_pitch;
-                    }
-
-                    else{
-                        Engine_Sound.volume = Forward_volume;
-                        Engine_Sound.pitch = Forward_pitch;
-                    }
+        //Audio System
+        if(Enable_Audio){
+            if(Enable_Engine_Audio){
+                //Setting the pitch according to the speed of the car.
+                pitch = Car_Speed_In_KPH/Maximum_Speed + 1f;
+                
+                //Do this if the pitch variable exceeds the maximum pitch value
+                if(pitch > Maximum_Pitch_Value){
+                    pitch = Maximum_Pitch_Value;
                 }
 
-                if(Forward_volume < Min_Volume){
-                    Forward_volume = Min_Volume;
-
-                    if(Forward_pitch > Max_Engine_Audio_Pitch){
-                        Forward_pitch = Max_Engine_Audio_Pitch;
-
-                        Engine_Sound.volume = Forward_volume;
-                        Engine_Sound.pitch = Forward_pitch;
-                    }
-
-                    if(Forward_pitch < Min_Engine_Audio_Pitch){
-                        Forward_pitch = Min_Engine_Audio_Pitch;
-
-                        Engine_Sound.volume = Forward_volume;
-                        Engine_Sound.pitch = Forward_pitch;
-                    }
-
-                    else{
-                        Engine_Sound.volume = Forward_volume;
-                        Engine_Sound.pitch = Forward_pitch;
-                    }
+                //Do this if the pitch variable is lower than the minimum pitch value
+                else if(pitch < Minimum_Pitch_Value){
+                    pitch = Minimum_Pitch_Value;
                 }
+
+                //This actually sets the audio source pitch
+                Engine_Sound.pitch = pitch;
             }
 
-            if(Input.GetKey(KeyCode.S)){
-                //Play Engine Sound
-                Engine_Sound.Play();
-
-                //Adjust Engine Sound Volume To Car Motor Torque
-                Reverse_volume = Motor_Torque/BR.motorTorque;
-
-                //Adjust Audio To Engine Speed
-                Reverse_pitch = -1f * (BR.motorTorque/Motor_Torque);
-
-                if(Forward_volume > Max_Volume){
-                    Forward_volume = Max_Volume;
-
-                    if(Forward_pitch > Max_Engine_Audio_Pitch){
-                        Forward_pitch = Max_Engine_Audio_Pitch;
-
-                        Engine_Sound.volume = Forward_volume;
-                        Engine_Sound.pitch = Forward_pitch;
-                    }
-
-                    if(Forward_pitch < Min_Engine_Audio_Pitch){
-                        Forward_pitch = Min_Engine_Audio_Pitch;
-
-                        Engine_Sound.volume = Forward_volume;
-                        Engine_Sound.pitch = Forward_pitch;
-                    }
-
-                    else{
-                        Engine_Sound.volume = Forward_volume;
-                        Engine_Sound.pitch = Forward_pitch;
-                    }
+            //Car Horn
+            if(Enable_Horn){
+                if(Input.GetKey(Car_Horn_Key) && !Horn_Source.isPlaying){
+                    //Play the sound
+                    Horn_Source.Play();
                 }
 
-                if(Forward_volume < Min_Volume){
-                    Forward_volume = Min_Volume;
-
-                    if(Forward_pitch > Max_Engine_Audio_Pitch){
-                        Forward_pitch = Max_Engine_Audio_Pitch;
-
-                        Engine_Sound.volume = Forward_volume;
-                        Engine_Sound.pitch = Forward_pitch;
-                    }
-
-                    if(Forward_pitch < Min_Engine_Audio_Pitch){
-                        Forward_pitch = Min_Engine_Audio_Pitch;
-
-                        Engine_Sound.volume = Forward_volume;
-                        Engine_Sound.pitch = Forward_pitch;
-                    }
-
-                    else{
-                        Engine_Sound.volume = Forward_volume;
-                        Engine_Sound.pitch = Forward_pitch;
-                    }
+                if(!Input.GetKey(Car_Horn_Key)){
+                    //Stop playing the sound
+                    Horn_Source.Stop();
                 }
             }
         }
-        
+    }
+
+    void OnCollisionEnter(Collision col){
+        //Play the crash sound when car crashes into an object with the tag in the "Crash_Object_Tags" list
+        if(Enable_Crash_Noise && Enable_Audio){
+            foreach (string tag in Crash_Object_Tags){
+                if(col.gameObject.tag == tag){
+                    //Play the crash sound:
+                    Crash_Sound.Play();
+                }
+
+                else{
+                    //Stop playing the crash sound
+                    Crash_Sound.Stop();
+                }
+            }
+        }
     }
 }
