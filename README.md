@@ -16,6 +16,6 @@ There is only 1 dependency, that is if you use the speedometer script, which is 
 3. Skid marks and particle effects
 4. Boost
 5. Lights (Brake Lights, Headlights and Reverse Lights)
-6. Audio System (Not Very Good, still bad and full of bugs)
+6. Audio System
 7. Gear System
 8. Speedometer
