@@ -8,7 +8,7 @@ public class Speedometer_Controller : MonoBehaviour
 {
     //Public Vars
     [Header("General Settings")]
-    public Rigidbody Car;
+    public Rigidbody Car_Rb;
 
     public float Maximum_Speed = 0.0f;
 
@@ -55,12 +55,12 @@ public class Speedometer_Controller : MonoBehaviour
     {
         //Show speed in KPH
         if(Speed_In_KPH){
-            speed = Car.velocity.magnitude * 3.6f;
+            speed = Car_Rb.velocity.magnitude * 3.6f;
         }
 
         //Show speed in MPH
         if(!Speed_In_KPH){
-            speed = Car.velocity.magnitude * 2.237f;
+            speed = Car_Rb.velocity.magnitude * 2.237f;
         }
 
         //If speed_text var is assigned
@@ -113,7 +113,7 @@ public class Speedometer_Controller : MonoBehaviour
             //When the last gear speed is the same as the current speed
             //This basically limits the speed of the car, so the car has a max speed and does not exceed it
             if(Gear_Speeds.Last() <= speed){
-                Car.velocity = Vector3.ClampMagnitude(Car.velocity, Maximum_Speed);
+                Car_Rb.velocity = Vector3.ClampMagnitude(Car_Rb.velocity, Maximum_Speed);
             }
 
             //When speed is equal to 0
